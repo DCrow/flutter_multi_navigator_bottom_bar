@@ -9,12 +9,18 @@ class BottomBarTab {
   final WidgetBuilder tabIconBuilder;
   final WidgetBuilder tabTitleBuilder;
   final GlobalKey<NavigatorState> _navigatorKey;
+  /// Save current `BottomBarTab` state, when changing to another `BottomBarTab`
+  /// Useful for realizing Material guidelines for Android/iOS
+  ///
+  /// For more information refer to https://material.io/design/components/bottom-navigation.html#behavior
+  final bool savePageState;
 
   BottomBarTab({
     @required this.initPageBuilder,
     @required this.tabIconBuilder,
     this.tabTitleBuilder,
     this.routePageBuilder,
+    this.savePageState = true,
     GlobalKey<NavigatorState> navigatorKey,
   }) : _navigatorKey = navigatorKey ?? GlobalKey<NavigatorState>();
 }
@@ -66,14 +72,26 @@ class _MultiNavigatorBottomBarState extends State<MultiNavigatorBottomBar> {
   }
 
   Widget _buildOffstageNavigator(BottomBarTab tab) {
-    return Offstage(
-      offstage: widget.tabs.indexOf(tab) != currentIndex,
-      child: TabPageNavigator(
+    if (tab.savePageState) {
+      return Offstage(
+        offstage: widget.tabs.indexOf(tab) != currentIndex,
+        child: TabPageNavigator(
+          navigatorKey: tab._navigatorKey,
+          initPage: tab.initPageBuilder(context),
+          pageRoute: widget.pageRoute,
+        ),
+      );
+    }
+
+    if (widget.tabs.indexOf(tab) == currentIndex) {
+      return TabPageNavigator(
         navigatorKey: tab._navigatorKey,
         initPage: tab.initPageBuilder(context),
         pageRoute: widget.pageRoute,
-      ),
-    );
+      );
+    }
+
+    return Container();
   }
 
   Widget _buildBottomBar() {
