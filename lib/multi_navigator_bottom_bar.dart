@@ -8,7 +8,6 @@ class BottomBarTab {
   final WidgetBuilder initPageBuilder;
   final WidgetBuilder tabIconBuilder;
   final WidgetBuilder tabTitleBuilder;
-  final GlobalKey<NavigatorState> _navigatorKey;
   /// Save current `BottomBarTab` state, when changing to another `BottomBarTab`
   /// Useful for realizing Material guidelines for Android/iOS
   ///
@@ -21,8 +20,7 @@ class BottomBarTab {
     this.tabTitleBuilder,
     this.routePageBuilder,
     this.savePageState = true,
-    GlobalKey<NavigatorState> navigatorKey,
-  }) : _navigatorKey = navigatorKey ?? GlobalKey<NavigatorState>();
+  });
 }
 
 class MultiNavigatorBottomBar extends StatefulWidget {
@@ -50,16 +48,12 @@ class _MultiNavigatorBottomBarState extends State<MultiNavigatorBottomBar> {
   _MultiNavigatorBottomBarState(this.currentIndex);
 
   @override
-  Widget build(BuildContext context) => WillPopScope(
-        onWillPop: () async => !await widget
-            .tabs[currentIndex]._navigatorKey.currentState
-            .maybePop(),
-        child: Scaffold(
+  Widget build(BuildContext context) =>Scaffold(
           body: widget.pageWidgetDecorator == null
               ? _buildPageBody()
               : widget.pageWidgetDecorator(_buildPageBody()),
           bottomNavigationBar: _buildBottomBar(),
-        ),
+
       );
 
   Widget _buildPageBody() {
@@ -76,7 +70,6 @@ class _MultiNavigatorBottomBarState extends State<MultiNavigatorBottomBar> {
       return Offstage(
         offstage: widget.tabs.indexOf(tab) != currentIndex,
         child: TabPageNavigator(
-          navigatorKey: tab._navigatorKey,
           initPage: tab.initPageBuilder(context),
           pageRoute: widget.pageRoute,
         ),
@@ -85,7 +78,6 @@ class _MultiNavigatorBottomBarState extends State<MultiNavigatorBottomBar> {
 
     if (widget.tabs.indexOf(tab) == currentIndex) {
       return TabPageNavigator(
-        navigatorKey: tab._navigatorKey,
         initPage: tab.initPageBuilder(context),
         pageRoute: widget.pageRoute,
       );
@@ -109,26 +101,22 @@ class _MultiNavigatorBottomBarState extends State<MultiNavigatorBottomBar> {
 }
 
 class TabPageNavigator extends StatelessWidget {
-  TabPageNavigator(
-      {@required this.navigatorKey, @required this.initPage, this.pageRoute});
+  TabPageNavigator({@required this.initPage, this.pageRoute});
 
-  final GlobalKey<NavigatorState> navigatorKey;
   final Widget initPage;
   final PageRoute pageRoute;
 
   @override
   Widget build(BuildContext context) => Navigator(
-        key: navigatorKey,
         onGenerateRoute: (routeSettings) =>
             pageRoute ??
             MaterialPageRoute(
               settings: RouteSettings(isInitialRoute: true),
-              builder: (context) =>
-                  _defaultPageRouteBuilder(routeSettings.name)(context),
-            ),
+              builder: (context) => _defaultPageRouteBuilder(routeSettings.name)(context),
+            )
       );
 
-  WidgetBuilder _defaultPageRouteBuilder(String routName, {String heroTag}) {
+  WidgetBuilder _defaultPageRouteBuilder(String routeName, {String heroTag}) {
     return (context) => initPage;
   }
 }
